@@ -1,0 +1,17 @@
+<div>
+    <video #video autoplay></video>
+    <canvas #canvas></canvas>
+    <button (click)="startCamera()">Start Camera</button>
+    <button (click)="capture()">Capture</button>
+    <div *ngFor="let capture of captures">
+      <img [src]="capture" alt="Captured Document">
+    </div>
+  </div>
+
+  <div>
+    <h2>Results:</h2>
+    <p>Source Text: {{ sourceText }}</p>
+    <p>Category: {{ category }}</p>
+    <p>Tags: {{ tags.join(', ') }}</p>
+  </div>
+  
