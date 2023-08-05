@@ -16,6 +16,8 @@ export class DocumentCaptureComponent implements AfterViewInit {
   category!: string;
   tags: string[] = [];
   sourceText!: string;
+  videoDevices!: MediaDeviceInfo[];
+  selectedVideoDevice!: MediaDeviceInfo | null;
 
   constructor() {
     this.captures = [];
@@ -27,13 +29,34 @@ export class DocumentCaptureComponent implements AfterViewInit {
   }
 
   startCamera() {
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-        this.video.srcObject = stream;
-        this.video.play();
-      });
-    }
+    navigator.mediaDevices.enumerateDevices().then(devices => {
+      this.videoDevices = devices.filter(device => device.kind === 'videoinput');
+      if (this.videoDevices.length > 0) {
+        this.selectedVideoDevice = this.videoDevices[0]; // Select the first available video device by default
+        this.startMediaStream();
+      } else {
+        console.error('No video devices found.');
+      }
+    });
   }
+
+  changeCamera(device: MediaDeviceInfo) {
+    this.selectedVideoDevice = device;
+    this.startMediaStream();
+  }
+  
+  startMediaStream() {
+    if (this.selectedVideoDevice) {
+      navigator.mediaDevices.getUserMedia({ video: { deviceId: this.selectedVideoDevice.deviceId } })
+        .then(stream => {
+          this.video.srcObject = stream;
+          this.video.play();
+        })
+        .catch(err => {
+          console.error('Error accessing video stream:', err);
+        });
+    }
+  }  
 
   capture() {
     this.canvas.getContext('2d').drawImage(this.video, 0, 0, this.video.videoWidth, this.video.videoHeight);
