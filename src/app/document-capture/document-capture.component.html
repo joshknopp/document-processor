@@ -1,7 +1,6 @@
 <div>
   <video #video autoplay></video>
   <canvas #canvas [width]="video.videoWidth" [height]="video.videoHeight"></canvas>
-  <button (click)="startCamera()">Start Camera</button>
   <button (click)="changeCamera(device)" *ngFor="let device of videoDevices">
     {{ device.label || 'Camera ' + (device.deviceId || '') }}
   </button>
@@ -17,5 +16,6 @@
     <p>Source Text: {{ sourceText }}</p>
     <p>Category: {{ category }}</p>
     <p>Tags: {{ tags.join(', ') }}</p>
+    <pre>{{ videoDevices | json }}</pre>
   </div>
   

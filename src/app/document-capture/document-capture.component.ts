@@ -17,7 +17,6 @@ export class DocumentCaptureComponent implements AfterViewInit {
   tags: string[] = [];
   sourceText!: string;
   videoDevices!: MediaDeviceInfo[];
-  selectedVideoDevice!: MediaDeviceInfo | null;
 
   constructor() {
     this.captures = [];
@@ -26,36 +25,33 @@ export class DocumentCaptureComponent implements AfterViewInit {
   ngAfterViewInit() {
     this.video = this.videoElement.nativeElement;
     this.canvas = this.canvasElement.nativeElement;
+    this.getCameraList();
   }
 
-  startCamera() {
+  getCameraList() {
     navigator.mediaDevices.enumerateDevices().then(devices => {
+      console.log(devices)
       this.videoDevices = devices.filter(device => device.kind === 'videoinput');
-      if (this.videoDevices.length > 0) {
-        this.selectedVideoDevice = this.videoDevices[0]; // Select the first available video device by default
-        this.startMediaStream();
-      } else {
+      if (this.videoDevices?.length == 0) {
         console.error('No video devices found.');
       }
     });
   }
 
   changeCamera(device: MediaDeviceInfo) {
-    this.selectedVideoDevice = device;
-    this.startMediaStream();
+    this.startMediaStream(device);
   }
   
-  startMediaStream() {
-    if (this.selectedVideoDevice) {
-      navigator.mediaDevices.getUserMedia({ video: { deviceId: this.selectedVideoDevice.deviceId } })
-        .then(stream => {
-          this.video.srcObject = stream;
-          this.video.play();
-        })
-        .catch(err => {
-          console.error('Error accessing video stream:', err);
-        });
-    }
+  startMediaStream(device: MediaDeviceInfo) {
+    this.video.load();
+    navigator.mediaDevices.getUserMedia({ video: { deviceId: device.deviceId } })
+      .then(stream => {
+        this.video.srcObject = stream;
+        this.video.play();
+      })
+      .catch(err => {
+        console.error('Error accessing video stream:', err);
+      });
   }  
 
   capture() {
