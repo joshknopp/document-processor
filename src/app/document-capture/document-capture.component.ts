@@ -12,14 +12,15 @@ export class DocumentCaptureComponent implements AfterViewInit {
   @ViewChild('canvas', { static: true }) canvasElement!: ElementRef;
   video!: any;
   canvas!: any;
-  captures!: any[];
+  capturedImage!: Tesseract.ImageLike | undefined;
   category!: string;
   tags: string[] = [];
   sourceText!: string;
   videoDevices!: MediaDeviceInfo[];
+  isReadyToCapture: boolean = false;
 
   constructor() {
-    this.captures = [];
+    this.capturedImage = undefined;
   }
 
   ngAfterViewInit() {
@@ -38,12 +39,8 @@ export class DocumentCaptureComponent implements AfterViewInit {
     });
   }
 
-  changeCamera(device: MediaDeviceInfo) {
-    this.startMediaStream(device);
-  }
-  
   startMediaStream(device: MediaDeviceInfo) {
-    this.video.load();
+    this.capturedImage = undefined;
     navigator.mediaDevices.getUserMedia({ video: { deviceId: device.deviceId } })
       .then(stream => {
         this.video.srcObject = stream;
@@ -54,21 +51,34 @@ export class DocumentCaptureComponent implements AfterViewInit {
       });
   }  
 
-  capture() {
-    this.canvas.getContext('2d').drawImage(this.video, 0, 0, this.video.videoWidth, this.video.videoHeight);
-    const image = this.canvas.toDataURL('image/png');
-    this.captures.push(image);
+  onVideoEvent(event: any) {
+    this.isReadyToCapture = (event?.type === 'loadeddata' || event?.type === 'progress');
+  }
 
-    // OCR text extraction
-    Tesseract.recognize(image)
-      .then(result => {
-        const extractedText = result.data.text;
-        this.sourceText = extractedText;
-        //this.processDocument(extractedText);
-      })
-      .catch(err => {
+  captureImage() {
+    setTimeout(async () => {
+      this.canvas.getContext('2d').drawImage(this.video, 0, 0, this.video.videoWidth, this.video.videoHeight);
+      this.capturedImage = this.canvas.toDataURL('image/png');
+      this.video.srcObject = null;
+      this.video.load();
+      // OCR text extraction
+      this.sourceText = '(Extraction pending...)';
+      try {
+        this.sourceText = await this.extractTextFromImage(this.capturedImage as Tesseract.ImageLike);
+      } catch(err) {
+        this.sourceText = 'Extraction failed';
         console.error('OCR Error:', err);
-      });
+      }
+    }, 1);
+  }
+
+  async extractTextFromImage(image: Tesseract.ImageLike) {
+    const result: Tesseract.RecognizeResult = await Tesseract.recognize(image);
+    return result.data.text;
+  }
+
+  handleOnload(event: any) {
+    console.log(event)
   }
 
   processDocument(text: string) {

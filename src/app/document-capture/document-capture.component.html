@@ -1,21 +1,27 @@
+
 <div>
-  <video #video autoplay></video>
-  <canvas #canvas [width]="video.videoWidth" [height]="video.videoHeight"></canvas>
-  <button (click)="changeCamera(device)" *ngFor="let device of videoDevices">
+  <button (click)="captureImage()" [disabled]="!isReadyToCapture">Capture</button>
+  |
+  <button (click)="startMediaStream(device)" *ngFor="let device of videoDevices">
     {{ device.label || 'Camera ' + (device.deviceId || '') }}
   </button>
-  <button (click)="capture()">Capture</button>
-  <div *ngFor="let capture of captures">
-    <img [src]="capture" alt="Captured Document">
-  </div>
 </div>
+<div [style.display]="capturedImage ? 'none' : ''">
+  <video #video autoplay style="max-width: 90vw; max-height: 90vh;"
+    (play)="onVideoEvent($event)"
+    (emptied)="onVideoEvent($event)"
+    (loadeddata)="onVideoEvent($event)"
+    (progress)="onVideoEvent($event)" (click)="captureImage()"></video>
+</div>
+<canvas style="display: none;" #canvas [width]="video.videoWidth" [height]="video.videoHeight" (onLoad)="handleOnload($event)"></canvas>
 
-
+<div *ngIf="capturedImage">
+  <h2>Results:</h2>
   <div>
-    <h2>Results:</h2>
-    <p>Source Text: {{ sourceText }}</p>
-    <p>Category: {{ category }}</p>
-    <p>Tags: {{ tags.join(', ') }}</p>
-    <pre>{{ videoDevices | json }}</pre>
+    <img [src]="capturedImage" alt="Captured Image" width="100">
   </div>
+  <p>Source Text: {{ sourceText }}</p>
+  <p>Category: {{ category }}</p>
+  <p>Tags: {{ tags.join(', ') }}</p>
+</div>
   
